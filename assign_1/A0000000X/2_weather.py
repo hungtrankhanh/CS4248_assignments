@@ -3,6 +3,7 @@
 
     Class Weather for handling Objective 2
 '''
+import re
 class Weather:
 
     # Class Constants for responses.
@@ -21,4 +22,6 @@ class Weather:
         respond appropriately
         '''
         # TODO Modify the code here
+        regex = "(^|[\\s\\w])([hH]ow|[Ww]hat)[.]*[Ww]eather[.]*[\\?]?"
+        city_regex = ''
         pass

@@ -10,6 +10,11 @@ import re
 from datetime import datetime
 import json
 # TODO add your imports here, so that you can have this main file use the
+# from 1_tokenizer import *
+OBJ1 = __import__('1_tokenizer')
+OBJ2 = __import__('2_weather')
+OBJ3 = __import__('3_ngram_lm')
+
 # classes defined for Objectives 1-3.
 
 class Echo:
@@ -46,7 +51,7 @@ USERNAME = "CS4248 Bot of Awesomeness"
 USER_EMOJI = ":dog:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
-SLACK_TOKEN = "xoxb-xxxxx-xxxxx-xxxxx"
+SLACK_TOKEN = "xoxb-1655204110567-1670847146195-3oVFONiUZF4shYLKRXKK1PAj"
 
 # This is the function where you can make replies as a function
 # of the message sent by the user
@@ -61,11 +66,35 @@ def make_message(text):
         return
 
     # TODO Write your code to route the messages to the appropriate class
+    print("text: ", text)
+    text = re.compile("\\s(\\s)+").sub(" ", text)
+    text = re.compile("[\\s]*=[\\s]*").sub("=", text)
+
+    print("text 2 : ", text)
+
+    arguments = text.split(" ")
+    print("arguments : ", arguments)
+
+    objective = arguments[0]
+    filepath = arguments[1].split("=")[1]
+    filepath = filepath.strip()
+    lowercase =  arguments[2].split("=")[1]
+    stopwords = arguments[3].split("=")[1]
+
+    print("command : objective :", objective, " filepath:", filepath, " lowercase:", lowercase, " stopwords:", stopwords)
+    tokenization = OBJ1.Tokenizer('textbooks/64378-0.txt')
+    tokenization.remove_stopwords()
+    n_frequent_words = tokenization.get_frequent_words(10)
+    tokenization.plot_word_frequency()
+    string_result = ''
+    for item in n_frequent_words:
+        string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
+
+
     # depending on the first token.  You can start by trying to route a message
     # of the form "OBJ0 Hi there", to the Echo class above, and then delete
     # comment out the placeholder lines below.
-    reply = "You said: {}".format(text)
-    return reply
+    return Echo.echo(string_result)
 
 def do_respond(web_client, channel, text):
     # Post the message in Slack
@@ -84,6 +113,8 @@ def message(**payload):
     Call do_respond() with the appropriate information for all incoming
     direct messages to our bot.
     """
+    print("here 0")
+
     web_client = payload["web_client"]
 
     # Getting information from the response
@@ -93,9 +124,10 @@ def message(**payload):
     subtype = data.get("subtype")
     ts = data['ts']
     user = data.get('username') if not data.get('user') else data.get('user')
-
+    print("here 1")
     # Creating a Converstion object
     message = Message(ts, user, text)
+    print("here 2")
 
     # Appending the converstion attributes to the logs
     conversation.append(message.toDict())
