@@ -69,23 +69,23 @@ def make_message(text):
     print("text: ", text)
     text = re.compile("\\s(\\s)+").sub(" ", text)
     text = re.compile("[\\s]*=[\\s]*").sub("=", text)
-
     print("text 2 : ", text)
 
     arguments = text.split(" ")
     print("arguments : ", arguments)
-
     objective = arguments[0]
-    filepath = arguments[1].split("=")[1]
-    filepath = filepath.strip()
-    lowercase =  arguments[2].split("=")[1]
-    stopwords = arguments[3].split("=")[1]
+    if objective == "OBJ1":
+        filepath = arguments[1].split("=")[1]
+        filepath = filepath.strip()
+        lowercase =  arguments[2].split("=")[1]
+        stopwords = arguments[3].split("=")[1]
 
-    print("command : objective :", objective, " filepath:", filepath, " lowercase:", lowercase, " stopwords:", stopwords)
-    tokenization = OBJ1.Tokenizer('textbooks/64378-0.txt')
-    tokenization.remove_stopwords()
-    n_frequent_words = tokenization.get_frequent_words(10)
-    tokenization.plot_word_frequency()
+        print("command : objective :", objective, " filepath:", filepath, " lowercase:", lowercase, " stopwords:", stopwords)
+        tokenization = OBJ1.Tokenizer('textbooks/64378-0.txt')
+        tokenization.remove_stopwords()
+        n_frequent_words = tokenization.get_frequent_words(10)
+        tokenization.plot_word_frequency()
+    else if objective == "OBJ2":
     string_result = ''
     for item in n_frequent_words:
         string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
