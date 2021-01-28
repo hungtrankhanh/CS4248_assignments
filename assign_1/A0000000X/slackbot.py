@@ -11,9 +11,9 @@ from datetime import datetime
 import json
 # TODO add your imports here, so that you can have this main file use the
 # from 1_tokenizer import *
-OBJ1 = __import__('1_tokenizer')
-OBJ2 = __import__('2_weather')
-OBJ3 = __import__('3_ngram_lm')
+from obj1_tokenizer import *
+from obj2_weather import *
+from obj3_ngram_lm import *
 
 # classes defined for Objectives 1-3.
 
@@ -47,54 +47,143 @@ class Message:
 conversation = []
 
 # TODO Make these whatever you want.
-USERNAME = "CS4248 Bot of Awesomeness"
-USER_EMOJI = ":dog:"
+USERNAME = "CS4248_Bot_A0212253W"
+USER_EMOJI = ":robot_face:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
-SLACK_TOKEN = "xoxb-1655204110567-1670847146195-3oVFONiUZF4shYLKRXKK1PAj"
+SLACK_TOKEN = "xoxb-1655204110567-1670847146195-R8ve6x5qrw1lUVzvP23VYpsT"
+
 
 # This is the function where you can make replies as a function
 # of the message sent by the user
 # You'll need to modify the code to call the functions that
 # you've created in the rest of the exercises.
-def make_message(text):
+# def make_message(text):
+#     # To stop the bot, simply enter the 'EXIT' command
+#     if text == 'EXIT':
+#         rtm_client.stop()
+#         with open('./conversation.json', 'w') as f:
+#             json.dump(conversation, f)
+#         return
+#
+#     # TODO Write your code to route the messages to the appropriate class
+#     print("text: ", text)
+#     text = re.compile("\\s(\\s)+").sub(" ", text)
+#     text = re.compile("[\\s]*=[\\s]*").sub("=", text)
+#     print("text 2 : ", text)
+#
+#     arguments = text.split(" ")
+#     print("arguments : ", arguments)
+#     objective = arguments[0]
+#     if objective == "OBJ1":
+#         filepath = (arguments[1].split("=")[1]).strip()
+#         is_lowercase = (arguments[3].split("=")[1]).strip()
+#         is_stopwords = (arguments[4].split("=")[1]).strip()
+#
+#         print("command : objective :", objective, " filepath:", filepath, " lowercase:", is_lowercase, " stopwords:", is_stopwords)
+#         obj1 = Tokenizer('textbooks/64378-0.txt')
+#         if is_lowercase == 'YES':
+#             obj1.convert_lowercase()
+#
+#         if is_stopwords == 'YES':
+#             obj1.remove_stopwords()
+#
+#         n_frequent_words = obj1.get_frequent_words(10)
+#         obj1.plot_word_frequency()
+#     elif objective == "OBJ2":
+#         print(objective)
+#
+#     string_result = ''
+#     for item in n_frequent_words:
+#         string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
+#
+#
+#     # depending on the first token.  You can start by trying to route a message
+#     # of the form "OBJ0 Hi there", to the Echo class above, and then delete
+#     # comment out the placeholder lines below.
+#     return Echo.echo(string_result)
+def make_message(user_input):
+    ''' Driver function - Parses the user_input, calls the appropriate classes and functions
+    and returns the output to the make_message() function
+
+    Example input: user_input = "OBJ0 echo_text=Hi there"
+    '''
+    print("-------------------------1")
     # To stop the bot, simply enter the 'EXIT' command
-    if text == 'EXIT':
+    if user_input == 'EXIT':
         rtm_client.stop()
         with open('./conversation.json', 'w') as f:
             json.dump(conversation, f)
         return
+    print("-------------------------2")
 
-    # TODO Write your code to route the messages to the appropriate class
-    print("text: ", text)
-    text = re.compile("\\s(\\s)+").sub(" ", text)
-    text = re.compile("[\\s]*=[\\s]*").sub("=", text)
-    print("text 2 : ", text)
+    # Regex matching and calling appropriate classes and functions
+    pattern_dict = {
+        "OBJ0": r"OBJ0 echo_text=(?P<echo_text>.*)",
+        "OBJ1": r"OBJ1 path=(?P<path>.*) n_top_words=(?P<n_top_words>\d+) lowercase=(?P<lowercase>YES|NO) stopwords=(?P<stopwords>YES|NO)",
+        "OBJ2": r"OBJ2 (?P<input_text>.*)",
+        "OBJ3": r"OBJ3 path=(?P<path>.*) smooth=(?P<smooth>.*) n_gram=(?P<n_gram>\d) k=(?P<k>\d+(?:\.\d+)?) text=(?P<text>.*)",
+    }
+    print("-------------------------3")
 
-    arguments = text.split(" ")
-    print("arguments : ", arguments)
-    objective = arguments[0]
-    if objective == "OBJ1":
-        filepath = arguments[1].split("=")[1]
-        filepath = filepath.strip()
-        lowercase =  arguments[2].split("=")[1]
-        stopwords = arguments[3].split("=")[1]
+    for key in pattern_dict.keys():
+        match = re.match(pattern_dict[key], user_input)
+        print("user_input :", user_input, " key:",key,"match:",match )
+        if match:
+            # Dictionary with key as argument name and value as argument value
+            commands_dict = match.groupdict()
+            if key == "OBJ0":
+                print("[SUCCESS] Matched objective 0")
+                echo = Echo()
+                reply = echo.echo(commands_dict['echo_text'])
+                break
 
-        print("command : objective :", objective, " filepath:", filepath, " lowercase:", lowercase, " stopwords:", stopwords)
-        tokenization = OBJ1.Tokenizer('textbooks/64378-0.txt')
-        tokenization.remove_stopwords()
-        n_frequent_words = tokenization.get_frequent_words(10)
-        tokenization.plot_word_frequency()
-    else if objective == "OBJ2":
-    string_result = ''
-    for item in n_frequent_words:
-        string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
+            elif key == "OBJ1":
+                print("[SUCCESS] Matched objective 1")
+                filepath = commands_dict['path']
+                n_top_words = commands_dict['n_top_words']
+                is_lowercase = commands_dict['lowercase']
+                is_stopwords = commands_dict['stopwords']
+                print("----------1")
+                obj1 = Tokenizer(filepath)
+                print("----------2")
 
+                if is_lowercase == 'YES':
+                    obj1.convert_lowercase()
+                if is_stopwords == 'YES':
+                    obj1.remove_stopwords()
+                print("----------3")
 
-    # depending on the first token.  You can start by trying to route a message
-    # of the form "OBJ0 Hi there", to the Echo class above, and then delete
-    # comment out the placeholder lines below.
-    return Echo.echo(string_result)
+                n_top_word_list = obj1.get_frequent_words(int(n_top_words))
+                obj1.plot_word_frequency()
+                print("----------3 : n_top_word_list", n_top_word_list)
+
+                string_result = ''
+                for item in n_top_word_list:
+                    string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
+                print("return reyly: 0 000")
+                reply = Echo.echo(string_result)
+                print("return reyly: 0 ", reply)
+                # TODO complete objective 1
+                break
+
+            elif key == "OBJ2":
+                print("[SUCCESS] Matched objective 2")
+                reply = Weather(commands_dict['input_text']).weather(commands_dict['input_text'])
+
+                # TODO complete objective 2
+                break
+
+            elif key == "OBJ3":
+                print("[SUCCESS] Matched objective 3")
+                # TODO complete objective 3
+                break
+
+            else:
+                print("[ERROR] Did not match any commands!")
+    print("return reyly: ", reply)
+    return reply
+
 
 def do_respond(web_client, channel, text):
     # Post the message in Slack

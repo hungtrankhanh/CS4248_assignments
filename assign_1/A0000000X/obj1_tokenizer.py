@@ -10,8 +10,8 @@ from nltk.corpus import stopwords   # Requires NLTK in the include path.
 import matplotlib.pyplot as plt     # Requires matplotlib to create plots.
 import re
 ## List of stopwords
-import nltk
-nltk.download('stopwords')
+# import nltk
+# nltk.download('stopwords')
 STOPWORDS = stopwords.words('english') # type: list(str)
 class Tokenizer:
 
@@ -22,7 +22,10 @@ class Tokenizer:
     def tokenize(self):
         ''' Returns a set of word tokens '''
         # TODO Modify the code here
-        words = self.text.split(" ")
+        # words = re.split(r'[\s]+|\W[\W]+|[\W]\W+', self.text)
+        words = re.split(r'[\s]+|\W[\W]+|[\W]\W+', self.text)
+        words = [w for w in words if w]
+        print("tokenize : ", words)
         return words
 
     def get_frequent_words(self, n):
@@ -109,15 +112,18 @@ class Tokenizer:
             plt.ylabel('Word Frequency')
             plt.title("Zipf's law chart")
             plt.savefig('foo.png')
+            plt.close()
+
         except Exception as e:
             print("Oops!", e.__class__, "occurred.")
-
-        pass
 
     def remove_stopwords(self):
         ''' Removes stopwords from the text corpus '''
         # TODO Modify the code here
         print("STOPWORDS : ", STOPWORDS)
         for stopword in STOPWORDS:
-            self.text = re.compile("(^|\\s){}([\\s]|$)".format(stopword), re.IGNORECASE).sub(" ", self.text)
-        pass
+            self.text = re.compile(r'(^|\s){}([\s]|$)'.format(stopword), re.IGNORECASE).sub(" ", self.text)
+        print("remove_stopwords : ")
+
+    def convert_lowercase(self):
+        self.text = self.text.casefold()
