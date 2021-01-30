@@ -51,7 +51,7 @@ USERNAME = "CS4248_Bot_A0212253W"
 USER_EMOJI = ":robot_face:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
-SLACK_TOKEN = "xoxb-1655204110567-1670847146195-R8ve6x5qrw1lUVzvP23VYpsT"
+SLACK_TOKEN = "xoxb-1655204110567-1670847146195-eCvEvposzegFn7XXZThmlZRj"
 
 
 # This is the function where you can make replies as a function
@@ -177,6 +177,18 @@ def make_message(user_input):
             elif key == "OBJ3":
                 print("[SUCCESS] Matched objective 3")
                 # TODO complete objective 3
+                filepath = commands_dict['path']
+                smooth_type = commands_dict['smooth']
+                n_gram = commands_dict['n_gram']
+                add_k = commands_dict['k']
+                text = commands_dict['text']
+                ngramlm = NgramLM(int(n_gram), float(add_k))
+                ngramlm.read_file(filepath)
+                next_word = ngramlm.generate_word(text)
+                print("generate word : ", next_word)
+                generated_text = ngramlm.generate_text(10)
+                print("generated_text : ", generated_text)
+
                 break
 
             else:
