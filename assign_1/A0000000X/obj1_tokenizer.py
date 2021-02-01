@@ -8,6 +8,7 @@
 
 from nltk.corpus import stopwords   # Requires NLTK in the include path.
 import matplotlib.pyplot as plt     # Requires matplotlib to create plots.
+import math
 import re
 ## List of stopwords
 # import nltk
@@ -100,13 +101,21 @@ class Tokenizer:
                             if idx == (n_len-1):
                                 descending_ordered_words.append(word)
 
-            word_frequency = []
+            relative_word_frequency = []
+            current_rank = []
+            curr_count = 0
             for word in descending_ordered_words:
                 temp_count = words_count_dict[word]
-                word_frequency.append(float(temp_count)/float(word_token_len))
-            plt.plot(word_frequency)
-            plt.xlabel('Word Rank')
-            plt.ylabel('Word Frequency')
+                if temp_count != curr_count:
+                    rank = len(current_rank) + 1
+                    curr_count = temp_count
+                    freq = (temp_count*1.0)/word_token_len
+                    relative_word_frequency.append(math.log(freq))
+                    current_rank.append(math.log(rank))
+
+            plt.plot(current_rank, relative_word_frequency)
+            plt.xlabel('log(Word Rank)')
+            plt.ylabel('log(Word Frequency)')
             plt.title("Zipf's law chart")
             plt.savefig('zipf_law_chart.png')
             plt.close()

@@ -93,7 +93,6 @@ def make_message(user_input):
                 is_lowercase = commands_dict['lowercase']
                 is_stopwords = commands_dict['stopwords']
                 obj1 = Tokenizer(filepath)
-
                 if is_lowercase == 'YES':
                     obj1.convert_lowercase()
                 if is_stopwords == 'YES':
