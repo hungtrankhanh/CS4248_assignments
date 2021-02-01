@@ -51,80 +51,28 @@ USERNAME = "CS4248_Bot_A0212253W"
 USER_EMOJI = ":robot_face:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
-SLACK_TOKEN = "xoxb-1655204110567-1670847146195-eCvEvposzegFn7XXZThmlZRj"
+SLACK_TOKEN = ""
 
-
-# This is the function where you can make replies as a function
-# of the message sent by the user
-# You'll need to modify the code to call the functions that
-# you've created in the rest of the exercises.
-# def make_message(text):
-#     # To stop the bot, simply enter the 'EXIT' command
-#     if text == 'EXIT':
-#         rtm_client.stop()
-#         with open('./conversation.json', 'w') as f:
-#             json.dump(conversation, f)
-#         return
-#
-#     # TODO Write your code to route the messages to the appropriate class
-#     print("text: ", text)
-#     text = re.compile("\\s(\\s)+").sub(" ", text)
-#     text = re.compile("[\\s]*=[\\s]*").sub("=", text)
-#     print("text 2 : ", text)
-#
-#     arguments = text.split(" ")
-#     print("arguments : ", arguments)
-#     objective = arguments[0]
-#     if objective == "OBJ1":
-#         filepath = (arguments[1].split("=")[1]).strip()
-#         is_lowercase = (arguments[3].split("=")[1]).strip()
-#         is_stopwords = (arguments[4].split("=")[1]).strip()
-#
-#         print("command : objective :", objective, " filepath:", filepath, " lowercase:", is_lowercase, " stopwords:", is_stopwords)
-#         obj1 = Tokenizer('textbooks/64378-0.txt')
-#         if is_lowercase == 'YES':
-#             obj1.convert_lowercase()
-#
-#         if is_stopwords == 'YES':
-#             obj1.remove_stopwords()
-#
-#         n_frequent_words = obj1.get_frequent_words(10)
-#         obj1.plot_word_frequency()
-#     elif objective == "OBJ2":
-#         print(objective)
-#
-#     string_result = ''
-#     for item in n_frequent_words:
-#         string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
-#
-#
-#     # depending on the first token.  You can start by trying to route a message
-#     # of the form "OBJ0 Hi there", to the Echo class above, and then delete
-#     # comment out the placeholder lines below.
-#     return Echo.echo(string_result)
 def make_message(user_input):
     ''' Driver function - Parses the user_input, calls the appropriate classes and functions
     and returns the output to the make_message() function
 
     Example input: user_input = "OBJ0 echo_text=Hi there"
     '''
-    print("-------------------------1")
     # To stop the bot, simply enter the 'EXIT' command
     if user_input == 'EXIT':
         rtm_client.stop()
         with open('./conversation.json', 'w') as f:
             json.dump(conversation, f)
         return
-    print("-------------------------2")
 
     # Regex matching and calling appropriate classes and functions
     pattern_dict = {
         "OBJ0": r"OBJ0 echo_text=(?P<echo_text>.*)",
         "OBJ1": r"OBJ1 path=(?P<path>.*) n_top_words=(?P<n_top_words>\d+) lowercase=(?P<lowercase>YES|NO) stopwords=(?P<stopwords>YES|NO)",
         "OBJ2": r"OBJ2 (?P<input_text>.*)",
-        "OBJ3": r"OBJ3 path=(?P<path>.*) smooth=(?P<smooth>.*) n_gram=(?P<n_gram>\d) k=(?P<k>\d+(?:\.\d+)?) text=(?P<text>.*)",
+        "OBJ3": r"OBJ3 path=(?P<path>.*) smooth=(?P<smooth>.*) lambda=(?P<lambda>\[.*\]) n_gram=(?P<n_gram>\d) k=(?P<k>\d+(?:\.\d+)?) text=(?P<text>.*) next_word=(?P<next_word>.*) length=(?P<length>\d+)",
     }
-    print("-------------------------3")
 
     for key in pattern_dict.keys():
         match = re.match(pattern_dict[key], user_input)
@@ -144,26 +92,19 @@ def make_message(user_input):
                 n_top_words = commands_dict['n_top_words']
                 is_lowercase = commands_dict['lowercase']
                 is_stopwords = commands_dict['stopwords']
-                print("----------1")
                 obj1 = Tokenizer(filepath)
-                print("----------2")
 
                 if is_lowercase == 'YES':
                     obj1.convert_lowercase()
                 if is_stopwords == 'YES':
                     obj1.remove_stopwords()
-                print("----------3")
 
                 n_top_word_list = obj1.get_frequent_words(int(n_top_words))
                 obj1.plot_word_frequency()
-                print("----------3 : n_top_word_list", n_top_word_list)
-
                 string_result = ''
                 for item in n_top_word_list:
                     string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
-                print("return reyly: 0 000")
                 reply = Echo.echo(string_result)
-                print("return reyly: 0 ", reply)
                 # TODO complete objective 1
                 break
 
@@ -177,22 +118,39 @@ def make_message(user_input):
             elif key == "OBJ3":
                 print("[SUCCESS] Matched objective 3")
                 # TODO complete objective 3
+                print("commands_dict : ", commands_dict)
                 filepath = commands_dict['path']
                 smooth_type = commands_dict['smooth']
+                lambda_list = commands_dict['lambda']
                 n_gram = commands_dict['n_gram']
                 add_k = commands_dict['k']
                 text = commands_dict['text']
+                next_word = commands_dict['next_word']
+                length = commands_dict['length']
                 ngramlm = NgramLM(int(n_gram), float(add_k))
+                ngramlm.set_smoothing_mode(smooth_type, json.loads(lambda_list))
                 ngramlm.read_file(filepath)
-                next_word = ngramlm.generate_word(text)
-                print("generate word : ", next_word)
-                generated_text = ngramlm.generate_text(10)
-                print("generated_text : ", generated_text)
+                generated_word = ngramlm.generate_word(text)
+                print("Generated word: " + generated_word)
+                next_word_prob = ngramlm.get_next_word_probability(text, next_word)
+                print("Probability of next word: " + str(next_word_prob))
+                perlexity_text = ngramlm.perplexity(text)
+                print("Perplexity: " + str(perlexity_text))
+                generated_text = ngramlm.generate_text(int(length))
+                print("Generated text: " + generated_text)
 
+                string_result = "\n"
+                string_result += "Generated word: " + generated_word + "\n"
+                string_result += "Probability of next word: " + str(next_word_prob) + "\n"
+                string_result += "Perplexity: " + str(perlexity_text) + "\n"
+                string_result += "Generated text: " + generated_text + "\n"
+                reply = Echo.echo(string_result)
                 break
 
             else:
                 print("[ERROR] Did not match any commands!")
+                reply = Echo.echo("[ERROR] Did not match any commands!")
+
     print("return reyly: ", reply)
     return reply
 
@@ -214,8 +172,6 @@ def message(**payload):
     Call do_respond() with the appropriate information for all incoming
     direct messages to our bot.
     """
-    print("here 0")
-
     web_client = payload["web_client"]
 
     # Getting information from the response
@@ -225,10 +181,8 @@ def message(**payload):
     subtype = data.get("subtype")
     ts = data['ts']
     user = data.get('username') if not data.get('user') else data.get('user')
-    print("here 1")
     # Creating a Converstion object
     message = Message(ts, user, text)
-    print("here 2")
 
     # Appending the converstion attributes to the logs
     conversation.append(message.toDict())

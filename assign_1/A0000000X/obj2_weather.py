@@ -26,7 +26,7 @@ class Weather:
         sg_re = "[Ss](ingapore|'pore|ing|[Gg])"
         ld_re = "[Ll]ondon"
         ca_re = "[Cc]airo"
-        weather_re = "([Ww]hat|[Hh]ow)(.)*([Ww]eather)(.)*\?"
+        weather_re = "([Ww]hat|[Hh]ow)(.)*([Ww]eather|[Cc]limate)(.)*\?"
         if re.search(sg_re, text) and re.search(weather_re, text):
             return Weather.SINGAPORE_WEATHER
         if re.search(ld_re, text) and re.search(weather_re, text):

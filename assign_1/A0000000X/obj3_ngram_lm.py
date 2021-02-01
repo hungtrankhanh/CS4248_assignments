@@ -7,6 +7,10 @@ import random, math, re
 
 class NgramLM(object):
 
+    ADD_K_SMOOTHNG  = 0
+    BACKOFF_SMOOTHING = 1
+    INTERPOLATION_SMOOTHING = 2
+
     def __init__(self, n, k):
         '''
             Initialize your n-gram LM class
@@ -24,15 +28,33 @@ class NgramLM(object):
         self.n = n
         self.k = k
         self.word_count_dict = {}
-        self.pattern = r"\s+|[.,!?]"
+        self.pattern = r'[\(\)\[\]\{\}<>"\\/]|[\W]+\W|\W[\W]+|[\s]+'
+        self.lower_ngrams = []
+        self.smoothing_mode = NgramLM.ADD_K_SMOOTHNG
+        self.lambdas = []
+        self.is_unigram = False
 
     def update_corpus(self, text):
         ''' Updates the n-grams corpus based on text '''
         # TODO Write your code here
-        self.text_corpus = text
-        self.ngrams()
-        self.vocabulary = self.get_vocabulary()
-        self.vocabulary_size = len(self.vocabulary)
+        try :
+            self.lower_ngrams.clear()
+            self.vocabulary.clear()
+            self.word_count_dict.clear()
+            if self.n == 1:
+                self.is_unigram = True
+            else:
+                self.is_unigram = False
+
+            self.text_corpus = text
+            self.ngrams()
+            self.vocabulary = self.get_vocabulary()
+            self.vocabulary_size = len(self.vocabulary)
+
+
+        except Exception as e:
+            print("Oops!", e.__class__, "occurred.")
+
 
     def read_file(self, path):
         ''' Read the file and update the corpus  '''
@@ -50,15 +72,29 @@ class NgramLM(object):
         # TODO Write your code here
         ngram_list = []
         padding_text_corpus = self.add_padding()
+        print("-------------is unigram = ", self.is_unigram)
+        if self.is_unigram:
+            for text in padding_text_corpus:
+                tokens, token_len = self.tokenize(text)
+                for i in range(token_len):
+                    word = tokens[i]
+                    ngram_list.append(word)
+                    if word in self.word_count_dict:
+                        self.word_count_dict[word] += 1
+                    else:
+                        self.word_count_dict[word] = 1
+            print("<1>: ", ngram_list)
+
+            return ngram_list
+
         for text in padding_text_corpus:
             tokens, token_len = self.tokenize(text)
-            n_len = token_len - self.n
+            n_len = token_len - (self.n - 1)
             for i in range(n_len):
                 n_1_th_words = " ".join(tokens[i:i + (self.n - 1)])
                 n_th_word = tokens[i + (self.n - 1)]
                 item = (n_1_th_words, n_th_word)
                 ngram_list.append(item)
-
                 if n_1_th_words in self.word_count_dict:
                     nested_dict = self.word_count_dict[n_1_th_words]
                     if n_th_word in nested_dict:
@@ -68,6 +104,10 @@ class NgramLM(object):
                 else:
                     nested_dict = {n_th_word: 1}
                     self.word_count_dict[n_1_th_words] = nested_dict
+
+        if self.smoothing_mode != NgramLM.ADD_K_SMOOTHNG:
+            self.lower_order_ngrams(padding_text_corpus)
+
         print(ngram_list)
         return ngram_list
 
@@ -95,22 +135,16 @@ class NgramLM(object):
         # TODO Write your code here
         tokens, n_len = self.tokenize(text)
         sequence_context = []
-        for i in range(self.n-1):
+        sc_len = self.n - 1
+        for i in range(sc_len):
             sequence_context.append("~")
-        sum_log_prob = 0.0
 
-        for i in range(n_len):
-            word_text = tokens[i]
-            n_1_gram_context = " ".join(sequence_context)
-            prob = self.word_conditional_probability(n_1_gram_context, word_text)
-            sum_log_prob += math.log(prob)
-            sequence_context.pop(0)
-            sequence_context.append(word_text)
-
-        word_previous_context = " ".join(sequence_context)
-        word_prob = self.word_conditional_probability(word_previous_context, word)
-        sum_log_prob += math.log(word_prob)
-        return math.exp(sum_log_prob)
+        if n_len < sc_len:
+            sequence_context[sc_len - n_len:sc_len] = tokens
+        else:
+            sequence_context[0: sc_len] = tokens[n_len-sc_len:n_len]
+        next_word_prob = self.ngram_probability(sequence_context, word)
+        return next_word_prob
 
         # return self.word_conditional_probability(sequence_context, word)
 
@@ -123,7 +157,8 @@ class NgramLM(object):
         max_word_prob = 0.0
         possible_words = []
         for w in self.vocabulary:
-            prob = self.get_next_word_probability(text, w)
+            candidate_text = text + " " + w
+            prob, _, _ = self.text_joint_probability(candidate_text)
             if prob > max_word_prob:
                 possible_words.clear()
                 possible_words.append(w)
@@ -150,36 +185,64 @@ class NgramLM(object):
         Also handle the case when the LM assigns zero probabilities.
         '''
         # TODO Write your code here
+        prob, _, n_len = self.text_joint_probability(text)
+        return (1/prob)**(1/n_len)
+
+    def ngram_probability(self, sequence_context, word):
+        if self.smoothing_mode == NgramLM.ADD_K_SMOOTHNG:
+            prob = self.add_k_smoothing_probability(sequence_context, word)
+        elif self.smoothing_mode == NgramLM.BACKOFF_SMOOTHING:
+            prob = self.backoff_smoothing_probability(sequence_context, word)
+        elif self.smoothing_mode == NgramLM.INTERPOLATION_SMOOTHING:
+            prob = self.interpolation_smoothing_probability(sequence_context, word)
+        return prob
+
+    def text_joint_probability(self, text):
+        # TODO Write your code here
         tokens, n_len = self.tokenize(text)
         sequence_context = []
         for i in range(self.n-1):
             sequence_context.append("~")
         sum_log_prob = 0.0
-
         for i in range(n_len):
             word = tokens[i]
-            n_1_gram_context = " ".join(sequence_context)
-            prob = self.word_conditional_probability(n_1_gram_context, word)
+            prob = self.ngram_probability(sequence_context, word)
             sum_log_prob += math.log(prob)
-            sequence_context.pop(0)
-            sequence_context.append(word)
+            if not self.is_unigram:
+                sequence_context.pop(0)
+                sequence_context.append(word)
 
-        perlexity_text = (1/math.exp(sum_log_prob))**(1/n_len)
-        return perlexity_text
+        return math.exp(sum_log_prob), tokens, n_len
 
-    def word_conditional_probability(self, sequence_context, word):
-        if sequence_context in self.word_count_dict:
-            nested_dict = self.word_count_dict[sequence_context]
-            n_gram_count = self.k
-            if word in nested_dict:
-                n_gram_count += nested_dict[word]
-            n_1_gram_count = sum(nested_dict.values()) + self.k*self.vocabulary_size
-        else:
-            n_gram_count = self.k
-            n_1_gram_count = self.k*self.vocabulary_size
-        prob = n_gram_count / n_1_gram_count
+    def lower_order_ngrams(self, text_corpus):
+        for ngram_th in range(1, self.n):
+            ngram_dict = {}
+            for text in text_corpus:
+                tokens, token_len = self.tokenize(text)
+                n_len = token_len - (ngram_th - 1)
+                for i in range(n_len):
+                    if ngram_th == 1:  # *unigram*
+                        for i in range(n_len):
+                            word = tokens[i]
+                            if word in ngram_dict:
+                                ngram_dict[word] += 1
+                            else:
+                                ngram_dict[word] = 1
+                    else:
+                        for i in range(n_len):
+                            n_1_th_words = " ".join(tokens[i:i + (ngram_th - 1)])
+                            n_th_word = tokens[i + (ngram_th - 1)]
+                            if n_1_th_words in ngram_dict:
+                                nested_dict = ngram_dict[n_1_th_words]
+                                if n_th_word in nested_dict:
+                                    nested_dict[n_th_word] += 1
+                                else:
+                                    nested_dict[n_th_word] = 1
+                            else:
+                                nested_dict = {n_th_word: 1}
+                                ngram_dict[n_1_th_words] = nested_dict
+            self.lower_ngrams.append(ngram_dict)
 
-        return prob
 
     def tokenize(self, text):
         split_text = re.split(self.pattern, text)
@@ -187,3 +250,134 @@ class NgramLM(object):
         token_len = len(tokens)
         return tokens, token_len
 
+    def set_smoothing_mode(self, mode, lambdas):
+        if mode == "add_k":
+            print("[obj3_ngram_lm] using add_k smoothing")
+            self.smoothing_mode == NgramLM.ADD_K_SMOOTHNG
+        elif mode == "backoff":
+            print("[obj3_ngram_lm] using backoff smoothing")
+            self.smoothing_mode == NgramLM.BACKOFF_SMOOTHING
+        elif mode == "interpolation":
+            self.lambdas = lambdas
+            print("[obj3_ngram_lm] using interpolation smoothing:")
+            self.smoothing_mode = NgramLM.INTERPOLATION_SMOOTHING
+        else:
+            print("[obj3_ngram_lm] using add_k smoothing")
+            self.smoothing_mode = NgramLM.ADD_K_SMOOTHNG
+
+    def add_k_smoothing_probability(self, sequence_context, word):
+
+        if self.is_unigram:
+            if word in self.word_count_dict:
+                word_count = self.word_count_dict[word] + self.k
+                all_word_count = sum(self.word_count_dict.values()) + self.k * self.vocabulary_size
+            else:
+                word_count = self.k
+                all_word_count = sum(self.word_count_dict.values()) + self.k * (self.vocabulary_size + 1)
+
+            prob = (word_count*1.0) / all_word_count
+            return prob
+
+        key = " ".join(sequence_context)
+        if key in self.word_count_dict:
+            nested_dict = self.word_count_dict[key]
+            if word in nested_dict:
+                context_word_count = nested_dict[word] + self.k
+                context_count = sum(nested_dict.values()) + self.k*self.vocabulary_size
+            else:
+                context_word_count = self.k
+                context_count = sum(nested_dict.values()) + self.k*(self.vocabulary_size + 1)
+
+        else:
+            context_word_count = self.k
+            context_count = self.k*self.vocabulary_size
+        prob = (context_word_count*1.0) / context_count
+        return prob
+
+    def backoff_smoothing_probability(self, sequence_context, word):
+        if self.is_unigram:
+            if word in self.word_count_dict:
+                word_count = self.word_count_dict[word]
+                all_word_count = sum(self.word_count_dict.values())
+            else:
+                word_count = 1
+                all_word_count = sum(self.word_count_dict.values()) + 1
+
+            prob = (word_count*1.0) / all_word_count
+            return prob
+
+        n_len = len(sequence_context)
+        prob = 0.0
+        for i in range(n_len+1):
+            if i == 0:
+                temp = sequence_context[i:n_len]
+                key = " ".join(temp)
+                if key in self.word_count_dict:
+                    nested_dict = self.word_count_dict[key]
+                    if word in nested_dict:
+                        context_word_count = nested_dict[word]
+                        context_count = sum(nested_dict.values())
+                        prob = (context_word_count*1.0) / context_count
+                        break
+            elif i == n_len:
+                unigram_dict = self.lower_ngrams[0]
+                if word in unigram_dict:
+                    prob = (unigram_dict[word] * 1.0) / sum(unigram_dict.values())
+                else:
+                    prob = 1.0/ (sum(unigram_dict.values()) + 1)
+            else:
+                temp = sequence_context[i:n_len]
+                key = " ".join(temp)
+                ngram_dict = self.lower_ngrams[n_len-i]
+                if key in ngram_dict:
+                    nested_dict = ngram_dict[key]
+                    if word in nested_dict:
+                        context_word_count = nested_dict[word]
+                        context_count = sum(nested_dict.values())
+                        prob = (context_word_count*1.0) / context_count
+                        break
+        return prob
+
+    def interpolation_smoothing_probability(self, sequence_context, word):
+        if self.is_unigram:
+            if word in self.word_count_dict:
+                word_count = self.word_count_dict[word]
+                all_word_count = sum(self.word_count_dict.values())
+            else:
+                word_count = 1
+                all_word_count = sum(self.word_count_dict.values()) + 1
+
+            prob = (word_count*1.0) / all_word_count
+            return prob
+
+        n_len = len(sequence_context)
+        prob = 0.0
+        for i in range(n_len + 1):
+            temp_prob = 0.0
+            if i == 0:
+                temp = sequence_context[i:n_len]
+                key = " ".join(temp)
+                if key in self.word_count_dict:
+                    nested_dict = self.word_count_dict[key]
+                    if word in nested_dict:
+                        context_word_count = nested_dict[word]
+                        context_count = sum(nested_dict.values())
+                        temp_prob = (context_word_count*1.0) / context_count
+            elif i == n_len:
+                unigram_dict = self.lower_ngrams[0]
+                if word in unigram_dict:
+                    temp_prob = (unigram_dict[word] * 1.0) / sum(unigram_dict.values())
+                else:
+                    temp_prob = 1.0 / (sum(unigram_dict.values()) + 1)
+            else:
+                temp = sequence_context[i:n_len]
+                key = " ".join(temp)
+                ngram_dict = self.lower_ngrams[n_len - i]
+                if key in ngram_dict:
+                    nested_dict = ngram_dict[key]
+                    if word in nested_dict:
+                        context_word_count = nested_dict[word]
+                        context_count = sum(nested_dict.values())
+                        temp_prob = (context_word_count*1.0) / context_count
+            prob += self.lambdas[i]*temp_prob
+        return prob

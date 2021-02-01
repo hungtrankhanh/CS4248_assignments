@@ -23,7 +23,7 @@ class Tokenizer:
         ''' Returns a set of word tokens '''
         # TODO Modify the code here
         # words = re.split(r'[\s]+|\W[\W]+|[\W]\W+', self.text)
-        words = re.split(r'[\s]+|\W[\W]+|[\W]\W+', self.text)
+        words = re.split(r'[\(\)\[\]\{\}<>"\']|[\W]+\W|\W[\W]+|[\s]+', self.text)
         words = [w for w in words if w]
         print("tokenize : ", words)
         return words
@@ -64,8 +64,6 @@ class Tokenizer:
                 n_frequent_words_result.append(item)
         except Exception as e:
             print("Oops!", e.__class__, "occurred.")
-
-
         return  n_frequent_words_result
 
     def plot_word_frequency(self):
