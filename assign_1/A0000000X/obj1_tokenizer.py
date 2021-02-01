@@ -32,7 +32,6 @@ class Tokenizer:
         ''' Returns the most frequent unigrams from the text '''
         # TODO Modify the code here
         n_frequent_words_result = []
-
         try:
             words_count_dict = {}
             word_tokens = self.tokenize()
@@ -109,7 +108,7 @@ class Tokenizer:
             plt.xlabel('Word Rank')
             plt.ylabel('Word Frequency')
             plt.title("Zipf's law chart")
-            plt.savefig('foo.png')
+            plt.savefig('zipf_law_chart.png')
             plt.close()
 
         except Exception as e:
@@ -118,10 +117,8 @@ class Tokenizer:
     def remove_stopwords(self):
         ''' Removes stopwords from the text corpus '''
         # TODO Modify the code here
-        print("STOPWORDS : ", STOPWORDS)
         for stopword in STOPWORDS:
             self.text = re.compile(r'(^|\s){}([\s]|$)'.format(stopword), re.IGNORECASE).sub(" ", self.text)
-        print("remove_stopwords : ")
 
     def convert_lowercase(self):
         self.text = self.text.casefold()

@@ -198,7 +198,6 @@ class NgramLM(object):
         return prob
 
     def text_joint_probability(self, text):
-        # TODO Write your code here
         tokens, n_len = self.tokenize(text)
         sequence_context = []
         for i in range(self.n-1):
