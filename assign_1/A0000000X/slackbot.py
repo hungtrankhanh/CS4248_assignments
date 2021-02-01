@@ -101,24 +101,24 @@ def make_message(user_input):
 
                 n_top_word_list = obj1.get_frequent_words(int(n_top_words))
                 obj1.plot_word_frequency()
-                string_result = ''
+                string_result = '\n'
                 for item in n_top_word_list:
                     string_result += "('{}', {})\n".format(str(item[0]), str(item[1]))
-                reply = Echo.echo(string_result)
+                reply = string_result
+                print("OBJ1 reply : ", reply)
                 # TODO complete objective 1
                 break
 
             elif key == "OBJ2":
                 print("[SUCCESS] Matched objective 2")
                 reply = Weather(commands_dict['input_text']).weather(commands_dict['input_text'])
-
+                print("OJB2 reply : ", reply)
                 # TODO complete objective 2
                 break
 
             elif key == "OBJ3":
                 print("[SUCCESS] Matched objective 3")
                 # TODO complete objective 3
-                print("commands_dict : ", commands_dict)
                 filepath = commands_dict['path']
                 smooth_type = commands_dict['smooth']
                 lambda_list = commands_dict['lambda']
@@ -127,6 +127,7 @@ def make_message(user_input):
                 text = commands_dict['text']
                 next_word = commands_dict['next_word']
                 length = commands_dict['length']
+
                 ngramlm = NgramLM(int(n_gram), float(add_k))
                 ngramlm.set_smoothing_mode(smooth_type, json.loads(lambda_list))
                 ngramlm.read_file(filepath)
@@ -144,14 +145,15 @@ def make_message(user_input):
                 string_result += "Probability of next word: " + str(next_word_prob) + "\n"
                 string_result += "Perplexity: " + str(perlexity_text) + "\n"
                 string_result += "Generated text: " + generated_text + "\n"
-                reply = Echo.echo(string_result)
+                reply = string_result
                 break
 
             else:
                 print("[ERROR] Did not match any commands!")
                 reply = Echo.echo("[ERROR] Did not match any commands!")
-
-    print("return reyly: ", reply)
+        else:
+            print("[ERROR] The command is wrong format!")
+            reply = Echo.echo("[ERROR] The command is wrong format!")
     return reply
 
 

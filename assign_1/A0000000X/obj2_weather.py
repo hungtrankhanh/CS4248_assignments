@@ -23,15 +23,48 @@ class Weather:
         respond appropriately
         '''
         # TODO Modify the code here
-        sg_re = "[Ss](ingapore|'pore|ing|[Gg])"
-        ld_re = "[Ll]ondon"
-        ca_re = "[Cc]airo"
-        weather_re = "([Ww]hat|[Hh]ow)(.)*([Ww]eather|[Cc]limate)(.)*\?"
-        if re.search(sg_re, text) and re.search(weather_re, text):
+        sing_re1 = "(what|how|tell|check|verify)(.)*(weather|climate|temperature|temp)(.)*([s](ingapore|'pore|ing|g))(.)*\??"
+        sing_re2 = "([s](ingapore|'pore|ing|g))(.)*(what|how|tell|check|verify)(.)*(weather|climate|temperature|temp)(.)*\??"
+        sing_re3 = "([s](ingapore|'pore|ing|g))(.)*(weather|climate|temperature|temp)(.)*(as|like|same)(.)*\?"
+        sing_re4 = "(weather|climate|temperature|temp)(.)*([s](ingapore|'pore|ing|g))(.)*(as|like|same)(.)*\?"
+        sing_re5 = "(weather|climate|temperature|temp)(.)*([s](ingapore|'pore|ing|g))(.)*\?"
+        sing_re6 = "([s](ingapore|'pore|ing|g))(.)*(weather|climate|temperature|temp)(.)*\?"
+
+        ld_re1 = "(what|how|tell|check|verify)(.)*(weather|climate|temperature|temp)(.)*(london)(.)*\??"
+        ld_re2 = "(london)(.)*(what|how|tell|check|verify)(.)*(weather|climate|temperature|temp)(.)*\??"
+        ld_re3 = "(london)(.)*(weather|climate|temperature|temp)(.)*(as|like|same)(.)*\?"
+        ld_re4 = "(weather|climate|temperature|temp)(.)*(london)(.)*(as|like|same)(.)*\?"
+        ld_re5 = "(weather|climate|temperature|temp)(.)*(london)(.)*\?"
+        ld_re6 = "(london)(.)*(weather|climate|temperature|temp)(.)*\?"
+
+        ca_re1 = "(what|how|tell|check|verify)(.)*(weather|climate|temperature|temp)(.)*(cairo)(.)*\??"
+        ca_re2 = "(cairo)(.)*(what|how|tell|check|verify)(.)*(weather|climate|temperature|temp)(.)*\??"
+        ca_re3 = "(cairo)(.)*(weather|climate|temperature|temp)(.)*(as|like|same)(.)*\?"
+        ca_re4 = "(weather|climate|temperature|temp)(.)*(cairo)(.)*(as|like|same)(.)*\?"
+        ca_re5 = "(weather|climate|temperature|temp)(.)*(cairo)(.)*\?"
+        ca_re6 = "(cairo)(.)*(weather|climate|temperature|temp)(.)*\?"
+
+        lower_case_text = text.casefold()
+        if re.search(sing_re1, lower_case_text) \
+                or re.search(sing_re2, lower_case_text) \
+                or re.search(sing_re3, lower_case_text)\
+                or re.search(sing_re4, lower_case_text)\
+                or re.search(sing_re5, lower_case_text)\
+                or re.search(sing_re6, lower_case_text):
             return Weather.SINGAPORE_WEATHER
-        if re.search(ld_re, text) and re.search(weather_re, text):
+        if re.search(ld_re1, lower_case_text)\
+                or re.search(ld_re2, lower_case_text)\
+                or re.search(ld_re3, lower_case_text)\
+                or re.search(ld_re4, lower_case_text)\
+                or re.search(ld_re5, lower_case_text)\
+                or re.search(ld_re6, lower_case_text):
             return Weather.LONDON_WEATHER
-        if re.search(ca_re, text) and re.search(weather_re, text):
+        if re.search(ca_re1, lower_case_text)\
+                or re.search(ca_re2, lower_case_text)\
+                or re.search(ca_re3, lower_case_text)\
+                or re.search(ca_re4, lower_case_text)\
+                or re.search(ca_re5, lower_case_text)\
+                or re.search(ca_re6, lower_case_text):
             return Weather.CAIRO_WEATHER
 
         return Weather.DEFAULT
