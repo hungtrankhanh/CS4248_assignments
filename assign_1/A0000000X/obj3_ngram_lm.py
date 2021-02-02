@@ -64,8 +64,8 @@ class NgramLM(object):
         with open(path, encoding='utf-8', errors='ignore') as f:
             line = f.readline()
             while line:
-                full_text = self.replace_to_full_word_form(line.strip())
-                text_corpus.append(full_text)
+                norm_text = self.text_transformation(line.strip())
+                text_corpus.append(norm_text)
                 line = f.readline()
         self.update_corpus(text_corpus)
 
@@ -158,9 +158,9 @@ class NgramLM(object):
         # TODO Write your code here
         max_word_prob = 0.0
         possible_words = []
-        full_text = self.replace_to_full_word_form(text)
+        norm_text = self.text_transformation(text)
         for w in self.vocabulary:
-            candidate_text = full_text + " " + w
+            candidate_text = norm_text + " " + w
             prob, _, _ = self.text_joint_probability(candidate_text)
             if prob > max_word_prob:
                 possible_words.clear()
@@ -384,18 +384,19 @@ class NgramLM(object):
             prob += self.lambdas[i]*temp_prob
         return prob
 
-    def replace_to_full_word_form(self, text):
-        full_text = re.sub(r"(I|i)'m", r"\1 am", text)
-        full_text = re.sub(r"(H|h)e's", r"\1e is", full_text)
-        full_text = re.sub(r"(S|s)he's", r"\1he is", full_text)
-        full_text = re.sub(r"(T|t)hat's", r"\1hat is", full_text)
-        full_text = re.sub(r"(W|w)hat's", r"\1hat is", full_text)
-        full_text = re.sub(r"(W|w)here's", r"\1here is", full_text)
-        full_text = re.sub(r"(T|t)here's", r"\1here is", full_text)
-        full_text = re.sub(r"\'ll", " will", full_text)
-        full_text = re.sub(r"\'ve", " have", full_text)
-        full_text = re.sub(r"\'re", " are", full_text)
-        full_text = re.sub(r"\'d", " would", full_text)
-        full_text = re.sub(r"won't", "will not", full_text)
-        full_text = re.sub(r"can't", "can not", full_text)
-        return full_text
+    def text_transformation(self, text):
+        norm_text = text.casefold()
+        norm_text = re.sub(r"(I|i)'m", r"\1 am", norm_text)
+        norm_text = re.sub(r"(H|h)e's", r"\1e is", norm_text)
+        norm_text = re.sub(r"(S|s)he's", r"\1he is", norm_text)
+        norm_text = re.sub(r"(T|t)hat's", r"\1hat is", norm_text)
+        norm_text = re.sub(r"(W|w)hat's", r"\1hat is", norm_text)
+        norm_text = re.sub(r"(W|w)here's", r"\1here is", norm_text)
+        norm_text = re.sub(r"(T|t)here's", r"\1here is", norm_text)
+        norm_text = re.sub(r"\'ll", " will", norm_text)
+        norm_text = re.sub(r"\'ve", " have", norm_text)
+        norm_text = re.sub(r"\'re", " are", norm_text)
+        norm_text = re.sub(r"\'d", " would", norm_text)
+        norm_text = re.sub(r"won't", "will not", norm_text)
+        norm_text = re.sub(r"can't", "can not", norm_text)
+        return norm_text
