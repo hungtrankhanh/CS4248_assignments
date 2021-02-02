@@ -24,7 +24,8 @@ class Tokenizer:
         ''' Returns a set of word tokens '''
         # TODO Modify the code here
         # words = re.split(r'[\s]+|\W[\W]+|[\W]\W+', self.text)
-        words = re.split(r'[\(\)\[\]\{\}<>"\']|[\W]+\W|\W[\W]+|[\s]+', self.text)
+        # words = re.split(r'[\(\)\[\]\{\}<>"\']|[\W]+\W|\W[\W]+|[\s]+', self.text)
+        words = re.split(r'\W+', self.text)
         words = [w for w in words if w]
         print("tokenize : ", words)
         return words
@@ -127,7 +128,7 @@ class Tokenizer:
         ''' Removes stopwords from the text corpus '''
         # TODO Modify the code here
         for stopword in STOPWORDS:
-            self.text = re.compile(r'(^|\s){}([\s]|$)'.format(stopword), re.IGNORECASE).sub(" ", self.text)
+            self.text = re.compile(r'(^|\W+){}([\W+]|$)'.format(stopword), re.IGNORECASE).sub(" ", self.text)
 
     def convert_lowercase(self):
         self.text = self.text.casefold()

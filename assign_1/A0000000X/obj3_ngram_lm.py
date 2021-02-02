@@ -28,7 +28,7 @@ class NgramLM(object):
         self.n = n
         self.k = k
         self.word_count_dict = {}
-        self.pattern = r'[\(\)\[\]\{\}<>"\\/]|[\W]+\W|\W[\W]+|[\s]+'
+        self.pattern = r'\W+'
         self.lower_ngrams = []
         self.smoothing_mode = NgramLM.ADD_K_SMOOTHNG
         self.lambdas = []
@@ -50,6 +50,7 @@ class NgramLM(object):
             self.ngrams()
             self.vocabulary = self.get_vocabulary()
             self.vocabulary_size = len(self.vocabulary)
+            print(self.vocabulary)
 
 
         except Exception as e:
@@ -63,7 +64,8 @@ class NgramLM(object):
         with open(path, encoding='utf-8', errors='ignore') as f:
             line = f.readline()
             while line:
-                text_corpus.append(line.strip())
+                full_text = self.replace_to_full_word_form(line.strip())
+                text_corpus.append(full_text)
                 line = f.readline()
         self.update_corpus(text_corpus)
 
@@ -156,8 +158,9 @@ class NgramLM(object):
         # TODO Write your code here
         max_word_prob = 0.0
         possible_words = []
+        full_text = self.replace_to_full_word_form(text)
         for w in self.vocabulary:
-            candidate_text = text + " " + w
+            candidate_text = full_text + " " + w
             prob, _, _ = self.text_joint_probability(candidate_text)
             if prob > max_word_prob:
                 possible_words.clear()
@@ -380,3 +383,19 @@ class NgramLM(object):
                         temp_prob = (context_word_count*1.0) / context_count
             prob += self.lambdas[i]*temp_prob
         return prob
+
+    def replace_to_full_word_form(self, text):
+        full_text = re.sub(r"(I|i)'m", r"\1 am", text)
+        full_text = re.sub(r"(H|h)e's", r"\1e is", full_text)
+        full_text = re.sub(r"(S|s)he's", r"\1he is", full_text)
+        full_text = re.sub(r"(T|t)hat's", r"\1hat is", full_text)
+        full_text = re.sub(r"(W|w)hat's", r"\1hat is", full_text)
+        full_text = re.sub(r"(W|w)here's", r"\1here is", full_text)
+        full_text = re.sub(r"(T|t)here's", r"\1here is", full_text)
+        full_text = re.sub(r"\'ll", " will", full_text)
+        full_text = re.sub(r"\'ve", " have", full_text)
+        full_text = re.sub(r"\'re", " are", full_text)
+        full_text = re.sub(r"\'d", " would", full_text)
+        full_text = re.sub(r"won't", "will not", full_text)
+        full_text = re.sub(r"can't", "can not", full_text)
+        return full_text
