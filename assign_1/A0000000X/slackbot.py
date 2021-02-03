@@ -51,7 +51,7 @@ USERNAME = "CS4248_Bot_A0212253W"
 USER_EMOJI = ":robot_face:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
-SLACK_TOKEN = "git "
+SLACK_TOKEN = ""
 
 def make_message(user_input):
     ''' Driver function - Parses the user_input, calls the appropriate classes and functions
@@ -76,7 +76,6 @@ def make_message(user_input):
 
     for key in pattern_dict.keys():
         match = re.match(pattern_dict[key], user_input)
-        print("user_input :", user_input, " key:",key,"match:",match )
         if match:
             # Dictionary with key as argument name and value as argument value
             commands_dict = match.groupdict()
@@ -150,9 +149,6 @@ def make_message(user_input):
             else:
                 print("[ERROR] Did not match any commands!")
                 reply = Echo.echo("[ERROR] Did not match any commands!")
-        else:
-            print("[ERROR] The command is wrong format!")
-            reply = Echo.echo("[ERROR] The command is wrong format!")
     return reply
 
 

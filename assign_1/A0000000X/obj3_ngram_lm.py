@@ -50,9 +50,6 @@ class NgramLM(object):
             self.ngrams()
             self.vocabulary = self.get_vocabulary()
             self.vocabulary_size = len(self.vocabulary)
-            print(self.vocabulary)
-
-
         except Exception as e:
             print("Oops!", e.__class__, "occurred.")
 
