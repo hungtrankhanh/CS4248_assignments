@@ -27,7 +27,6 @@ class Tokenizer:
         # words = re.split(r'[\(\)\[\]\{\}<>"\']|[\W]+\W|\W[\W]+|[\s]+', self.text)
         words = re.split(r'\W+', self.text)
         words = [w for w in words if w]
-        print("tokenize : ", words)
         return words
 
     def get_frequent_words(self, n):
