@@ -74,7 +74,6 @@ class NgramLM(object):
         # TODO Write your code here
         ngram_list = []
         padding_text_corpus = self.add_padding()
-        print("-------------is unigram = ", self.is_unigram)
         if self.is_unigram:
             for text in padding_text_corpus:
                 tokens, token_len = self.tokenize(text)
@@ -85,7 +84,6 @@ class NgramLM(object):
                         self.word_count_dict[word] += 1
                     else:
                         self.word_count_dict[word] = 1
-            print("<1>: ", ngram_list)
 
             return ngram_list
 
@@ -110,7 +108,6 @@ class NgramLM(object):
         if self.smoothing_mode != NgramLM.ADD_K_SMOOTHNG:
             self.lower_order_ngrams(padding_text_corpus)
 
-        print(ngram_list)
         return ngram_list
 
     def add_padding(self):
@@ -255,10 +252,10 @@ class NgramLM(object):
     def set_smoothing_mode(self, mode, lambdas):
         if mode == "add_k":
             print("[obj3_ngram_lm] using add_k smoothing")
-            self.smoothing_mode == NgramLM.ADD_K_SMOOTHNG
+            self.smoothing_mode = NgramLM.ADD_K_SMOOTHNG
         elif mode == "backoff":
             print("[obj3_ngram_lm] using backoff smoothing")
-            self.smoothing_mode == NgramLM.BACKOFF_SMOOTHING
+            self.smoothing_mode = NgramLM.BACKOFF_SMOOTHING
         elif mode == "interpolation":
             self.lambdas = lambdas
             print("[obj3_ngram_lm] using interpolation smoothing:")
@@ -266,6 +263,9 @@ class NgramLM(object):
         else:
             print("[obj3_ngram_lm] using add_k smoothing")
             self.smoothing_mode = NgramLM.ADD_K_SMOOTHNG
+
+        print("set_smoothing_mode = ", self.smoothing_mode)
+
 
     def add_k_smoothing_probability(self, sequence_context, word):
 
@@ -326,7 +326,7 @@ class NgramLM(object):
                 if word in unigram_dict:
                     prob = (unigram_dict[word] * 1.0) / sum(unigram_dict.values())
                 else:
-                    prob = 1.0/ (sum(unigram_dict.values()) + 1)
+                    prob = 1.0/(sum(unigram_dict.values()) + 1)
             else:
                 temp = sequence_context[i:n_len]
                 key = " ".join(temp)
