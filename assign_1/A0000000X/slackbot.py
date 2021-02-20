@@ -51,7 +51,7 @@ USERNAME = "CS4248_Bot_A0212253W"
 USER_EMOJI = ":robot_face:"
 
 # TODO Copy your Bot User OAuth-Access Token and paste it here
-SLACK_TOKEN = ""
+SLACK_TOKEN = "xoxb-1655204110567-1670847146195-oljbWcfcVOxUr5XO9Vv0ggmw"
 
 def make_message(user_input):
     ''' Driver function - Parses the user_input, calls the appropriate classes and functions

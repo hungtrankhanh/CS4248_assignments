@@ -116,8 +116,7 @@ class Tokenizer:
             plt.plot(current_rank, relative_word_frequency)
             plt.xlabel('log(Word Rank)')
             plt.ylabel('log(Word Frequency)')
-            plt.title("Zipf's law chart")
-            plt.savefig('zipf_law_chart.png')
+            plt.savefig('word_chart.png')
             plt.close()
 
         except Exception as e:
