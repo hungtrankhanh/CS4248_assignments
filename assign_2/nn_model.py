@@ -6,25 +6,38 @@ import torch.nn.functional as F
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 import time
+from gensim.models import Word2Vec
+
 
 from data_reprocessing import *
-
+np.random.seed(4248)
 
 
 class TextClassifier(nn.Module):
   def __init__(self, D_in, H1, H2, D_out):
       super().__init__()
       self.linear1 = nn.Linear(D_in, H1)
+      self.weighs_init(self.linear1)
+
       self.linear2 = nn.Linear(H1, H2)
+      self.weighs_init(self.linear2)
+
       self.linear3 = nn.Linear(H2, D_out)
+      self.weighs_init(self.linear3)
+
       self.criterion = None
       self.optimizer = None
       self.batch_size = 32
       self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-      self.unigram_set = None
-      self.bigram_set = None
-      self.trigram_set = None
-      self.fourgram_set = None
+      self.n_grams_vocabulary = None
+      self.group_word_dict = {}
+      self.word_index_dict = {}
+
+  def weighs_init(self,m):
+      n = m.in_features
+      y = 1.0/np.sqrt(n)
+      m.weight.data.uniform_(-y , y)
+      m.bias.data.fill_(0.0)
 
   def forward(self, x):
       x = F.relu(self.linear1(x))
@@ -35,12 +48,16 @@ class TextClassifier(nn.Module):
   def loss_function(self, lr = 0.0001, batch_size = 64):
       self.batch_size = batch_size
       self.criterion = nn.CrossEntropyLoss()
-      self.optimizer = torch.optim.Adam(self.parameters(), lr)
+      # self.optimizer = torch.optim.Adam(self.parameters(), lr)
+      self.optimizer = torch.optim.SGD(self.parameters(), lr=lr, momentum=0.9)
+      # self.optimizer = torch.optim.RMSprop(self.parameters(), lr=lr)
+      self.to(self.device)
+
 
   def predict(self, X_test):
-      X_features = build_data_features(X_test, unigrams=self.unigram_set, bigrams=self.bigram_set, trigrams=self.trigram_set,
-                                       four_grams=self.fourgram_set)
-
+      # w_tf_df_matrix = tf_df_matrix(X_test, self.n_grams_vocabulary, self.word_index_dict)
+      X_features = build_data_features(X_test, self.n_grams_vocabulary, None,  self.word_index_dict)
+      # X_features = X_features*w_tf_df_matrix
       pred_result = []
       for x in X_features:
           x = torch.tensor(x, dtype=torch.float32).to(self.device)
@@ -51,12 +68,32 @@ class TextClassifier(nn.Module):
       return pred_result
 
   def train(self, X_data, y_data):
-      self.unigram_set, self.bigram_set, self.trigram_set, self.fourgram_set = top_4_grams_vocabulary(X_data, y_data)
+      # sentences = tokenize(X_data)
+      # word2vec_model = Word2Vec(sentences=sentences, min_count =2, sg=1, size=100, window = 8, workers=4)
 
-      X_features = build_data_features(X_data, unigrams=self.unigram_set, bigrams=self.bigram_set, trigrams=self.trigram_set,
-                                       four_grams=self.fourgram_set)
+      self.n_grams_vocabulary, unigram_list = top_4_grams_vocabulary(X_data, y_data, [1500, 1500,1000,500])#, top_n = [160, 50,50,50]
 
-      y_data = y_data + 1
+      word_idx = 0
+      for w in self.n_grams_vocabulary:
+          self.word_index_dict[w] = word_idx
+          word_idx += 1
+
+      # for w in unigram_list:
+      #     similar_list = word2vec_model.wv.most_similar(w)
+      #     similar_w = []
+      #     for item in similar_list:
+      #         similar_w.append(item[0])
+      #     similar_w.append(w)
+      #     self.group_word_dict[w] = similar_w
+      #
+      # print("w_dict : ", len(self.n_grams_vocabulary))
+      # print("w_dict : ", len(self.group_word_dict))
+
+
+      # w_tf_df_matrix = tf_df_matrix(X_data, self.n_grams_vocabulary, self.word_index_dict)
+
+      X_features = build_data_features(X_data, self.n_grams_vocabulary, None,  self.word_index_dict)
+      # X_features = X_features*w_tf_df_matrix
 
       kf = KFold(n_splits=8, shuffle=True, random_state=42)
       kfold_num = 1
@@ -82,12 +119,15 @@ class TextClassifier(nn.Module):
           ##################################################
 
           # #for LeNet
-          epochs = 20
+          if kfold_num > 1:
+              epochs = 20
+          else:
+              epochs = 40
+
           running_loss_history = []
           running_corrects_history = []
           val_running_loss_history = []
           val_running_corrects_history = []
-
           for e in range(epochs):
               running_loss = 0.0
               running_corrects = 0.0

@@ -1,6 +1,7 @@
 import numpy as np
 import re
 import pandas as pd
+from data_reprocessing import *
 
 # from nltk.corpus import stopwords   # Requires NLTK in the include path.
 # import nltk
@@ -8,11 +9,11 @@ import pandas as pd
 # STOPWORDS = stopwords.words('english') # type: list(str)
 
 class NB_classifier:
-    def __init__(self, vocalbulary, word_index_dict, add_k = 1.0):
+    def __init__(self, add_k = 1.0):
         self.n_label = 3
         self.add_k = add_k
-        self.vocabulary = vocalbulary
-        self.word_index_dict = word_index_dict
+        self.vocabulary = None
+        self.word_index_dict = None
         self.doc_class_count = None
         self.word_class_count = None
         self.log_likelihood = None
@@ -25,10 +26,11 @@ class NB_classifier:
     #     return tokens, token_len
 
     def train(self, X_train, y_train):
+        X_train = tokenize(X_train)
+        self.vocabulary, self.word_index_dict = build_vocabulary(X_train)
 
         N = len(y_train)
         V = len(self.vocabulary)
-        y_train = y_train+1
 
         self.doc_class_count = np.zeros((self.n_label, 1))
         self.word_class_count = np.zeros((self.n_label, V))
@@ -54,6 +56,7 @@ class NB_classifier:
 
 
     def predict(self, X_test):
+        X_test = tokenize(X_test)
         N = len(X_test)
         results = []
         for j in range(N):

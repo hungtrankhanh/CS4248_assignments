@@ -30,7 +30,6 @@ from sklearn.metrics import f1_score
 from NB_classifier_Model import NB_classifier
 from data_reprocessing import *
 from nn_model import *
-from data_loader import *
 
 
 # TODO: Replace with your Student Number
@@ -57,43 +56,37 @@ def generate_result(test, y_pred, filename):
 
 def main():
     ''' load train, val, and test data '''
-    train_mode = 2
+    train_mode = 1 #0 : BN model, 1: NN model
     train = pd.read_csv('train.csv')
 
     #data train
-    X_train_data = normalization(train['Text'].tolist())
-    # X_train_data = remove_stopwords(X_train_data, STOPWORDS)
-    X_train = tokenize(X_train_data)
+    X_train = normalization(train['Text'].tolist())
     y_train = train['Verdict'].to_numpy()
-
-    vocabulary, word_index_dict = build_vocabulary(X_train)
-    print("---vocabulary = ", vocabulary)
+    y_train = y_train + 1
 
     model = None
     if train_mode == 1:
-        model = NB_classifier(vocabulary, word_index_dict, 3.0)
+        model = NB_classifier(3.0)
     else :
-        # tf_df_matrix(X_train, vocabulary, word_index_dict)
-        model = TextClassifier(434,200, 50, 3)
-        model.loss_function(lr=0.0001, batch_size=256)
+        model = TextClassifier(8189, 150, 30, 3)
+        model.loss_function(lr=0.001, batch_size=150)
 
 
     train_model(model, X_train, y_train)
     # test your model'
     y_pred = predict(model, X_train)
-    print("---y_pred = ", y_pred)
 
-    print("-----------------3333")
 
     # Use f1-macro as the metric
+    y_train = y_train - 1
     score = f1_score(y_train, y_pred, average='macro')
     print('score on validation = {}'.format(score))
 
     # generate prediction on test data
     test = pd.read_csv('test.csv')
-    X_test_data = normalization(test['Text'].tolist())
-    X_test = tokenize(X_test_data)
+    X_test = normalization(test['Text'].tolist())
     y_pred = predict(model, X_test)
+    print("---y_pred = ", y_pred)
     generate_result(test, y_pred, _STUDENT_NUM + ".csv")
 
 # Allow the main class to be invoked if run as a file.
