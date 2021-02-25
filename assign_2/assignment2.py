@@ -12,6 +12,7 @@ reference your code with your writeup.
 # Generally, system libraries precede others.
 import pandas as pd
 import re
+import argparse
 
 import torch
 import torch.nn as nn
@@ -19,8 +20,6 @@ import numpy as np
 import torch.nn.functional as F
 from sklearn.model_selection import KFold
 from sklearn.metrics import f1_score
-
-
 np.random.seed(4248)
 
 # TODO: Replace with your Student Number
@@ -260,7 +259,6 @@ def top_4_grams_vocabulary(doc_list, label_list, top_n = None):
     else:
         n_grams_vocabulary = list(unigram_list)
 
-    print(n_grams_vocabulary)
     print(len(n_grams_vocabulary))
 
     return n_grams_vocabulary, list(unigram_set)
@@ -444,8 +442,15 @@ def generate_result(test, y_pred, filename):
     test.to_csv(filename, index=False)
 
 def main():
+
+    parser = argparse.ArgumentParser(description='This program is implemented for text classification : non_factual statement, '
+                                                 'unimportant statement, important fact')
+    parser.add_argument('--train_data','-train', help="The path of training corpora file")
+    parser.add_argument('--test_data','-test', help="The path of testing corpora file")
+    args = parser.parse_args()
+    print("arg :", args)
     ''' load train, val, and test data '''
-    train = pd.read_csv('train.csv')
+    train = pd.read_csv(args.train_data)
 
     #data train
     X_train = normalization(train['Text'].tolist())
@@ -466,7 +471,7 @@ def main():
     print('score on validation = {}'.format(score))
 
     # generate prediction on test data
-    test = pd.read_csv('test.csv')
+    test = pd.read_csv(args.test_data)
     X_test = normalization(test['Text'].tolist())
     y_pred = predict(model, X_test)
     generate_result(test, y_pred, _STUDENT_NUM + ".csv")
